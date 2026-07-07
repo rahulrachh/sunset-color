@@ -10,3 +10,8 @@ next-env.d.ts
 .vercel
 .env*
 !.env.local.example
+
+# local-only demo/test harness pages
+/app/cloud-demo/
+/app/contrast-demo/
+/app/search-demo/
