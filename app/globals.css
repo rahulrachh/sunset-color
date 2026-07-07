@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@property --g-top {
+  syntax: '<color>';
+  initial-value: #fefcf8;
+  inherits: false;
+}
+@property --g-mid {
+  syntax: '<color>';
+  initial-value: #fefcf8;
+  inherits: false;
+}
+@property --g-bottom {
+  syntax: '<color>';
+  initial-value: #fefcf8;
+  inherits: false;
+}
+
+.sunset-stage {
+  --g-top: #fefcf8;
+  --g-mid: #fefcf8;
+  --g-bottom: #fefcf8;
+  background: linear-gradient(to bottom, var(--g-top) 0%, var(--g-mid) 55%, var(--g-bottom) 100%);
+  transition: --g-top 1500ms ease-in-out, --g-mid 1500ms ease-in-out, --g-bottom 1500ms ease-in-out;
+}
