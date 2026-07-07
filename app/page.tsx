@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LocationSearch, type LocationSelection } from "../components/LocationSearch";
 import { CloudLayer } from "../components/CloudLayer";
 import { MultiDayStrip } from "../components/MultiDayStrip";
+import { Tour } from "../components/Tour";
 import { forecastToColor, type ColorResult } from "../lib/colorMap";
 import { pickInk, INK_DARK } from "../lib/contrast";
 import type { ForecastResult } from "../lib/forecast";
@@ -34,6 +35,31 @@ function lowScoreLine(score: number): string {
   return LOW_SCORE_LINES[Math.abs(h) % LOW_SCORE_LINES.length];
 }
 
+// First-visit flag lives in localStorage, not a cookie: it is only ever read
+// client-side after a user interaction, so no server needs it, there are no
+// cookie-consent implications, and nothing is sent on every request. A cookie
+// would only be justified if the server had to know. Access is guarded
+// because Safari private mode can throw on localStorage use.
+const TOUR_DONE_KEY = "sunset-tour-done";
+
+function hasSeenTour(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return window.localStorage.getItem(TOUR_DONE_KEY) === "1";
+  } catch {
+    return true; // storage unavailable — better no tour than a crash
+  }
+}
+
+function markTourDone(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(TOUR_DONE_KEY, "1");
+  } catch {
+    // Nothing to do; the tour just won't be remembered as seen.
+  }
+}
+
 type View = {
   selection: LocationSelection;
   forecast: ForecastResult;
@@ -61,6 +87,10 @@ export default function Page() {
   const [view, setView] = useState<View | null>(null);
   const [loading, setLoading] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
+  // Once the tour has been scheduled this session it never rearms, even if
+  // the view changes, so finishing/skipping is final for the session too.
+  const tourScheduled = useRef(false);
 
   const onSelect = useCallback(async (loc: LocationSelection) => {
     setLoading(true);
@@ -168,6 +198,22 @@ export default function Page() {
     stage.style.setProperty("--g-mid", m.color);
     stage.style.setProperty("--g-bottom", b.color);
   }, [view]);
+
+  // First-visit tour: fires once, the first time a view exists and the flag
+  // isn't set. The 1.5s delay lets the gradient transition settle and the
+  // strip paint its swatch placeholders before anything gets spotlighted.
+  const hasView = view !== null;
+  useEffect(() => {
+    if (!hasView || tourScheduled.current || hasSeenTour()) return;
+    tourScheduled.current = true;
+    const t = setTimeout(() => setTourActive(true), 1500);
+    return () => clearTimeout(t);
+  }, [hasView]);
+
+  const endTour = useCallback(() => {
+    markTourDone();
+    setTourActive(false);
+  }, []);
 
   const heroInk = view ? pickInk(view.color.gradient.stops, 0.5) : INK_DARK;
   // The selected pill has a warm semi-opaque backdrop, so dark ink is always
@@ -342,6 +388,7 @@ export default function Page() {
           disabled={sharing}
           aria-label="Share this sunset"
           title="Share this sunset"
+          data-tour="share"
           style={{
             position: "absolute",
             bottom: "20px",
@@ -394,6 +441,9 @@ export default function Page() {
           inkColor={heroInk}
         />
       )}
+
+      {/* First-visit guided tour */}
+      {view && tourActive && <Tour onClose={endTour} />}
     </main>
   );
 }

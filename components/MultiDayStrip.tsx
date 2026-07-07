@@ -93,10 +93,12 @@ function StripButton(props: {
   hovered: boolean;
   onClick: () => void;
   onHover: (on: boolean) => void;
+  dataTour?: string; // declarative anchor for the first-visit tour
 }): JSX.Element {
   return (
     <button
       type="button"
+      data-tour={props.dataTour}
       onClick={props.onClick}
       disabled={props.disabled}
       onMouseEnter={() => props.onHover(true)}
@@ -265,6 +267,7 @@ export function MultiDayStrip(props: {
           }
         }}
         {...hoverProps("today")}
+        dataTour="today"
       />
       <StripButton
         circle={
@@ -278,43 +281,51 @@ export function MultiDayStrip(props: {
         inkColor={props.inkColor}
         onClick={() => setWindowStart(addDays(windowStart, -1))}
         {...hoverProps("back")}
+        dataTour="back"
       />
-      {days.map((d) => (
-        <StripButton
-          key={d.date}
-          circle={
-            <span
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "50%",
-                background: d.color ?? "transparent",
-                border: d.color ? "none" : `1.5px dashed ${props.inkColor}`,
-                opacity: d.color ? 1 : 0.35,
-                boxShadow:
-                  d.date === shown && d.color
-                    ? `0 0 0 2px ${props.inkColor}, 0 1px 6px rgba(0, 0, 0, 0.15)`
-                    : d.color
-                      ? "0 1px 6px rgba(0, 0, 0, 0.15)"
-                      : "none",
-                boxSizing: "border-box",
-                transition: "background 300ms ease, opacity 300ms ease",
-              }}
-            />
-          }
-          label={d.label}
-          date={d.dateLabel}
-          ariaLabel={
-            d.status === "failed"
-              ? `No forecast available for ${d.label} (${d.date})`
-              : `Show sunset forecast for ${d.label} (${d.date})`
-          }
-          inkColor={props.inkColor}
-          disabled={d.status === "failed"}
-          onClick={() => props.onSelectDate(d.date)}
-          {...hoverProps(d.date)}
-        />
-      ))}
+      {/* Grouped so the tour can spotlight all three swatches at once; the
+          inner gap matches the outer flex gap, keeping the layout identical. */}
+      <div
+        data-tour="days"
+        style={{ display: "flex", gap: "24px", alignItems: "flex-start" }}
+      >
+        {days.map((d) => (
+          <StripButton
+            key={d.date}
+            circle={
+              <span
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  background: d.color ?? "transparent",
+                  border: d.color ? "none" : `1.5px dashed ${props.inkColor}`,
+                  opacity: d.color ? 1 : 0.35,
+                  boxShadow:
+                    d.date === shown && d.color
+                      ? `0 0 0 2px ${props.inkColor}, 0 1px 6px rgba(0, 0, 0, 0.15)`
+                      : d.color
+                        ? "0 1px 6px rgba(0, 0, 0, 0.15)"
+                        : "none",
+                  boxSizing: "border-box",
+                  transition: "background 300ms ease, opacity 300ms ease",
+                }}
+              />
+            }
+            label={d.label}
+            date={d.dateLabel}
+            ariaLabel={
+              d.status === "failed"
+                ? `No forecast available for ${d.label} (${d.date})`
+                : `Show sunset forecast for ${d.label} (${d.date})`
+            }
+            inkColor={props.inkColor}
+            disabled={d.status === "failed"}
+            onClick={() => props.onSelectDate(d.date)}
+            {...hoverProps(d.date)}
+          />
+        ))}
+      </div>
       <StripButton
         circle={
           <span style={{ ...ring, fontSize: "16px", lineHeight: 1 }}>
@@ -327,6 +338,7 @@ export function MultiDayStrip(props: {
         inkColor={props.inkColor}
         onClick={() => setWindowStart(addDays(windowStart, 1))}
         {...hoverProps("next")}
+        dataTour="next"
       />
     </div>
   );
