@@ -1,4 +1,8 @@
-DONE !!!! — All tasks T0–T10 are complete. T10 (Share Button + Production Deploy) was the last task; its code work is done and verified locally. Note: the production-deploy portion (GitHub repo + Vercel) still needs manual setup, since the project was never git-initialized (see T0 steps 6–7).
+Next task: T11 (tasks/T11.md) — First-Visit Guided Tour.
+
+Before starting, rename the next session: /rename T11-sunset-tour
+
+At the end, give in the output, what changes can be seen on the frontend after this task.
 
 ----- DO NOT EDIT BELOW THIS -------------------
 Once this is done, update the file with the next task. if there is no next task, just update the file and say DONE !!!!
