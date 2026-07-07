@@ -51,7 +51,7 @@ The plan called for deploying in T0. Reality called an audible: the code was fin
 2. **Vercel via CLI** - device-code login (human clicks "Approve", AI does everything else), project linked, `AIRNOW_API_KEY` pushed to Production/Preview/Development through stdin so the value never appeared in any terminal output, then `vercel deploy --prod`.
 3. **Live verification** - curl checks on the production URL: meta tags present, share endpoint returns a real PNG, forecast API returns AirNow data, and the key appears in no HTTP response.
 4. **GitHub via CLI** - installed `gh`, another device-code dance, public repo created and pushed.
-5. **Auto-deploys** - Vercel connected to the GitHub repo, so every push to `master` now deploys itself. The pipeline's first test was the commit that removed the demo pages: pushed, built, live in about 40 seconds, no human hands.
+5. **Auto-deploys** - Vercel connected to the GitHub repo, so every push to `master` now deploys itself: pushed, built, live in about 40 seconds, no human hands.
 
 ## Division of labor
 
