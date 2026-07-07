@@ -6,6 +6,8 @@ Search any US city and the page repaints itself as the predicted sunset: a full-
 
 **Live:** https://sunset-color.vercel.app
 
+![Searching for Phoenix, AZ and watching the page turn into tonight's predicted sunset](demo.gif)
+
 No dashboards, no charts, no numbers. The forecast *is* the design. And it's honest: if tomorrow looks grey, you get a grey page and a gentle "stay in tonight". We don't fake sunsets here - this isn't The Truman Show, we can't just cue the sun.
 
 ## Features
