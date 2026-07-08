@@ -4,9 +4,12 @@ import { getSunsetForecast } from "@/lib/forecast";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const LAT_MIN = 24;
-const LAT_MAX = 50;
-const LNG_MIN = -125;
+// Rough bounding box for all 50 states: the search offers any US place
+// (including Alaska and Hawaii), so the forecast must accept them too. The
+// few Aleutian islands past the antimeridian are out of luck.
+const LAT_MIN = 18;
+const LAT_MAX = 72;
+const LNG_MIN = -180;
 const LNG_MAX = -66;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
