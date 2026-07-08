@@ -91,6 +91,15 @@ export default function Page() {
   // Once the tour has been scheduled this session it never rearms, even if
   // the view changes, so finishing/skipping is final for the session too.
   const tourScheduled = useRef(false);
+  // Bumped by the home button; remounts LocationSearch so it forgets the
+  // committed place and starts truly fresh.
+  const [searchKey, setSearchKey] = useState(0);
+
+  // Home: back to the start - centered empty search on the cream background.
+  const onHome = useCallback(() => {
+    setView(null);
+    setSearchKey((k) => k + 1);
+  }, []);
 
   const onSelect = useCallback(async (loc: LocationSelection) => {
     setLoading(true);
@@ -265,6 +274,7 @@ export default function Page() {
         }}
       >
         <LocationSearch
+          key={searchKey}
           onSelect={onSelect}
           inkColor={searchInk}
           underline={!selected}
@@ -361,6 +371,50 @@ export default function Page() {
             </p>
           )}
         </div>
+      )}
+
+      {/* Home button — bottom-left, resets to the centered empty search */}
+      {view && (
+        <button
+          type="button"
+          onClick={onHome}
+          aria-label="Back to search"
+          title="Back to search"
+          style={{
+            position: "absolute",
+            bottom: "20px",
+            left: "20px",
+            width: "40px",
+            height: "40px",
+            borderRadius: "9999px",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: `${heroInk}26`,
+            color: heroInk,
+            cursor: "pointer",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            transition: "background 600ms ease, color 600ms ease",
+            zIndex: 5,
+          }}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 10.5 12 3l9 7.5" />
+            <path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" />
+          </svg>
+        </button>
       )}
 
       {/* Share button — bottom-right, only once a location is selected */}
