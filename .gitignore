@@ -15,3 +15,6 @@ next-env.d.ts
 /app/cloud-demo/
 /app/contrast-demo/
 /app/search-demo/
+
+# local task queue pointer
+nextTask

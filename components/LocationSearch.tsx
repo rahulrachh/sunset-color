@@ -20,6 +20,10 @@ type GeoResult = {
 
 const DEBOUNCE_MS = 250;
 const MIN_QUERY_LEN = 2;
+// The API ignores its country filter, so US results only survive if we ask
+// for far more than we show: fetch the API max, filter down, display a few.
+const FETCH_COUNT = 100;
+const MAX_SUGGESTIONS = 8;
 
 export function LocationSearch(props: {
   onSelect: (loc: LocationSelection) => void;
@@ -76,12 +80,23 @@ export function LocationSearch(props: {
       const url =
         "https://geocoding-api.open-meteo.com/v1/search?name=" +
         encodeURIComponent(trimmed) +
-        "&count=8&country=US";
+        `&count=${FETCH_COUNT}`;
 
       fetch(url, { signal: ctrl.signal })
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error("geo " + r.status))))
         .then((data: { results?: GeoResult[] }) => {
-          const filtered = (data.results ?? []).filter((r) => r.country_code === "US");
+          // Keep the API's relevance order; drop entries that would render
+          // identically (same name + state) in the dropdown.
+          const seen = new Set<string>();
+          const filtered: GeoResult[] = [];
+          for (const r of data.results ?? []) {
+            if (r.country_code !== "US") continue;
+            const label = `${r.name}|${r.admin1 ?? ""}`;
+            if (seen.has(label)) continue;
+            seen.add(label);
+            filtered.push(r);
+            if (filtered.length >= MAX_SUGGESTIONS) break;
+          }
           setResults(filtered);
           setNoResults(filtered.length === 0);
           setOpen(true);
