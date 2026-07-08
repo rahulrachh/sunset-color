@@ -94,10 +94,19 @@ export default function Page() {
   // Bumped by the home button; remounts LocationSearch so it forgets the
   // committed place and starts truly fresh.
   const [searchKey, setSearchKey] = useState(0);
+  // Committed label seeded into LocationSearch when auto-locate lands, so
+  // the input shows "City, State" exactly as if the user had picked it.
+  const [autoCommitted, setAutoCommitted] = useState<string | null>(null);
+  // True once the user has typed or picked a place themselves - a late
+  // auto-locate response must never fight them.
+  const userActedRef = useRef(false);
+  // Auto-locate runs once per page load; going home never re-triggers it.
+  const locateAttemptedRef = useRef(false);
 
   // Home: back to the start - centered empty search on the cream background.
   const onHome = useCallback(() => {
     setView(null);
+    setAutoCommitted(null);
     setSearchKey((k) => k + 1);
     setFetchError(false);
   }, []);
@@ -130,6 +139,54 @@ export default function Page() {
       setLoading(false);
     }
   }, []);
+
+  // A selection made by the user (typed + picked from the dropdown), as
+  // opposed to one applied by auto-locate below.
+  const onUserSelect = useCallback(
+    (loc: LocationSelection) => {
+      userActedRef.current = true;
+      void onSelect(loc);
+    },
+    [onSelect]
+  );
+
+  const onUserType = useCallback(() => {
+    userActedRef.current = true;
+  }, []);
+
+  // Auto-locate from the coarse IP geo that /api/locate reads off Vercel's
+  // request headers. Best effort only: any failure or { location: null }
+  // (always the case on local dev) leaves the centered search untouched, and
+  // a response that lands after the user started typing/selecting is
+  // discarded.
+  useEffect(() => {
+    if (locateAttemptedRef.current) return;
+    locateAttemptedRef.current = true;
+    const ctrl = new AbortController();
+    let settled = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/locate", { signal: ctrl.signal });
+        const data = r.ok
+          ? ((await r.json()) as { location: LocationSelection | null })
+          : null;
+        settled = true;
+        const loc = data?.location;
+        if (!loc || userActedRef.current) return;
+        setAutoCommitted(loc.state ? `${loc.name}, ${loc.state}` : loc.name);
+        setSearchKey((k) => k + 1);
+        void onSelect(loc);
+      } catch {
+        settled = true; // aborted or network failure - stay on the search
+      }
+    })();
+    return () => {
+      ctrl.abort();
+      // Strict-mode mounts effects twice; if the first run was cut short,
+      // let the second one attempt the locate instead.
+      if (!settled) locateAttemptedRef.current = false;
+    };
+  }, [onSelect]);
 
   // A day picked from the strip: refetch that date and swap the main view.
   const onSelectDate = useCallback(
@@ -282,7 +339,9 @@ export default function Page() {
       >
         <LocationSearch
           key={searchKey}
-          onSelect={onSelect}
+          onSelect={onUserSelect}
+          onUserType={onUserType}
+          initialCommitted={autoCommitted ?? undefined}
           inkColor={searchInk}
           underline={!selected}
         />

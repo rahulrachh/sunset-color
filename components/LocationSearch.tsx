@@ -31,12 +31,19 @@ export function LocationSearch(props: {
   // Underline the input. On when the search stands bare (empty state); off
   // when it sits inside the rounded pill, where an underline looks odd.
   underline?: boolean;
+  // Seed the committed place ("Seattle, Washington") when a selection was
+  // made outside this component (auto-locate). Read once on mount - the page
+  // remounts the component (key bump) to apply it.
+  initialCommitted?: string;
+  // Fires on every user keystroke; lets the page know the user has taken
+  // over (e.g. to discard a late auto-locate response).
+  onUserType?: () => void;
 }): JSX.Element {
   const ink = props.inkColor ?? "#fff8ef";
   const listboxId = useId();
   const optionIdPrefix = useId();
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(props.initialCommitted ?? "");
   const [results, setResults] = useState<GeoResult[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -46,7 +53,9 @@ export function LocationSearch(props: {
   // The label of the last selected place ("Portland, Oregon"). It fills the
   // input after a selection; focusing again empties the input and shows it
   // as the placeholder instead, so a new search needs no backspacing.
-  const [committed, setCommitted] = useState<string | null>(null);
+  const [committed, setCommitted] = useState<string | null>(
+    props.initialCommitted ?? null
+  );
   // Set when query changes for non-typing reasons (selection, blur restore)
   // so the search effect below doesn't fire a pointless fetch for it.
   const skipSearchRef = useRef(false);
@@ -60,6 +69,10 @@ export function LocationSearch(props: {
       skipSearchRef.current = false;
       return;
     }
+    // The committed label sitting in the input is display state, not a
+    // search. This also keeps the initialCommitted mount quiet (the skip
+    // flag can't cover it: strict-mode re-runs effects but not ref inits).
+    if (committed !== null && query === committed) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const trimmed = query.trim();
@@ -114,7 +127,7 @@ export function LocationSearch(props: {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query]);
+  }, [query, committed]);
 
   useEffect(() => {
     return () => {
@@ -200,7 +213,10 @@ export function LocationSearch(props: {
         aria-activedescendant={activeId}
         placeholder={committed ?? "where are you watching sunset tonight?"}
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => {
+          props.onUserType?.();
+          setQuery(e.target.value);
+        }}
         onKeyDown={onKeyDown}
         onFocus={() => {
           // A committed place clears out of the way on focus - it stays
