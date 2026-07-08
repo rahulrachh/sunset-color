@@ -253,25 +253,22 @@ export default function Page() {
             : "translate(-50%, -50%) scale(1)",
           transformOrigin: "top left",
           width: "min(480px, calc(100vw - 2rem))",
-          // The search always lives in a rounded pill (the input itself has
-          // no underline); empty vs selected only changes size and warmth.
-          padding: selected ? "0.4rem 0.9rem" : "0.55rem 1.5rem",
-          borderRadius: "9999px",
-          background: selected
-            ? "rgba(255, 248, 239, 0.55)"
-            : "rgba(255, 255, 255, 0.8)",
-          boxShadow: selected
-            ? "0 2px 12px rgba(0, 0, 0, 0.08)"
-            : "0 6px 24px rgba(0, 0, 0, 0.07)",
-          backdropFilter: "blur(10px) saturate(1.1)",
-          WebkitBackdropFilter: "blur(10px) saturate(1.1)",
+          padding: selected ? "0.4rem 0.9rem" : "0",
+          borderRadius: selected ? "9999px" : "0",
+          background: selected ? "rgba(255, 248, 239, 0.55)" : "transparent",
+          boxShadow: selected ? "0 2px 12px rgba(0, 0, 0, 0.08)" : "none",
+          backdropFilter: selected ? "blur(10px) saturate(1.1)" : "none",
+          WebkitBackdropFilter: selected ? "blur(10px) saturate(1.1)" : "none",
           transition:
-            "transform 600ms cubic-bezier(0.4, 0, 0.2, 1), top 600ms cubic-bezier(0.4, 0, 0.2, 1), left 600ms cubic-bezier(0.4, 0, 0.2, 1), background 600ms ease, padding 600ms ease, box-shadow 600ms ease",
-          // Above the whisper text (z 5) so the dropdown panel covers it.
+            "transform 600ms cubic-bezier(0.4, 0, 0.2, 1), top 600ms cubic-bezier(0.4, 0, 0.2, 1), left 600ms cubic-bezier(0.4, 0, 0.2, 1), background 600ms ease, padding 600ms ease, border-radius 600ms ease",
           zIndex: 6,
         }}
       >
-        <LocationSearch onSelect={onSelect} inkColor={searchInk} />
+        <LocationSearch
+          onSelect={onSelect}
+          inkColor={searchInk}
+          underline={!selected}
+        />
       </div>
 
       {/* Hero block */}

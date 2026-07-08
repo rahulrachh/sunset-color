@@ -24,6 +24,9 @@ const MIN_QUERY_LEN = 2;
 export function LocationSearch(props: {
   onSelect: (loc: LocationSelection) => void;
   inkColor?: string;
+  // Underline the input. On when the search stands bare (empty state); off
+  // when it sits inside the rounded pill, where an underline looks odd.
+  underline?: boolean;
 }): JSX.Element {
   const ink = props.inkColor ?? "#fff8ef";
   const listboxId = useId();
@@ -156,36 +159,18 @@ export function LocationSearch(props: {
   const activeId =
     open && activeIndex >= 0 ? `${optionIdPrefix}-${activeIndex}` : undefined;
 
-  // No underline: the input always sits inside a rounded pill (page.tsx
-  // wraps it), so the pill itself is the affordance.
   const inputStyle: React.CSSProperties = {
     width: "100%",
     background: "transparent",
     border: "none",
+    borderBottom:
+      props.underline === false ? "none" : `1px solid ${withAlpha(ink, 0.4)}`,
     color: ink,
     outline: "none",
     fontSize: "1.25rem",
     padding: "0.5rem 0",
     caretColor: ink,
     fontFamily: "inherit",
-  };
-
-  // The dropdown floats as its own warm-white panel below the pill (same
-  // treatment as the tour popup), so option text is always legible no matter
-  // how dark the gradient behind it is.
-  const panelStyle: React.CSSProperties = {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: "100%",
-    background: "rgba(255, 248, 239, 0.97)",
-    color: "#2a1810",
-    borderRadius: "20px",
-    boxShadow: "0 8px 28px rgba(0, 0, 0, 0.12)",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    overflow: "hidden",
-    zIndex: 10,
   };
 
   return (
@@ -229,12 +214,17 @@ export function LocationSearch(props: {
         <p
           role="status"
           style={{
-            ...panelStyle,
-            margin: "14px 0 0",
-            padding: "0.7rem 1.25rem",
-            color: "rgba(42, 24, 16, 0.65)",
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: "100%",
+            margin: "4px 0 0",
+            padding: "0.5rem 0",
+            color: ink,
+            opacity: 0.6,
             fontStyle: "italic",
             fontSize: "0.9rem",
+            zIndex: 10,
           }}
         >
           no places found - try another spelling or a nearby city
@@ -245,10 +235,15 @@ export function LocationSearch(props: {
           id={listboxId}
           role="listbox"
           style={{
-            ...panelStyle,
-            marginTop: 14,
-            padding: "0.4rem 0",
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: "100%",
+            marginTop: 4,
+            padding: 0,
             listStyle: "none",
+            color: ink,
+            zIndex: 10,
           }}
         >
           {results.map((r, i) => {
@@ -265,9 +260,9 @@ export function LocationSearch(props: {
                 }}
                 onMouseEnter={() => setActiveIndex(i)}
                 style={{
-                  padding: "0.5rem 1.25rem",
+                  padding: "0.5rem 0",
                   cursor: "pointer",
-                  background: isActive ? "rgba(42, 24, 16, 0.08)" : "transparent",
+                  background: isActive ? withAlpha(ink, 0.12) : "transparent",
                   fontSize: "1rem",
                 }}
               >
