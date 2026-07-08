@@ -33,6 +33,9 @@ export function LocationSearch(props: {
   const [results, setResults] = useState<GeoResult[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  // True only after a search completed successfully with zero US matches —
+  // network errors stay silent rather than claiming the place doesn't exist.
+  const [noResults, setNoResults] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -47,6 +50,7 @@ export function LocationSearch(props: {
       setResults([]);
       setOpen(false);
       setActiveIndex(-1);
+      setNoResults(false);
       return;
     }
 
@@ -65,7 +69,8 @@ export function LocationSearch(props: {
         .then((data: { results?: GeoResult[] }) => {
           const filtered = (data.results ?? []).filter((r) => r.country_code === "US");
           setResults(filtered);
-          setOpen(filtered.length > 0);
+          setNoResults(filtered.length === 0);
+          setOpen(true);
           setActiveIndex(filtered.length > 0 ? 0 : -1);
         })
         .catch((err) => {
@@ -73,6 +78,7 @@ export function LocationSearch(props: {
           setResults([]);
           setOpen(false);
           setActiveIndex(-1);
+          setNoResults(false);
         });
     }, DEBOUNCE_MS);
 
@@ -147,7 +153,7 @@ export function LocationSearch(props: {
         type="text"
         role="combobox"
         aria-autocomplete="list"
-        aria-expanded={open}
+        aria-expanded={open && results.length > 0}
         aria-controls={listboxId}
         aria-activedescendant={activeId}
         placeholder="where are you watching tonight?"
@@ -155,13 +161,33 @@ export function LocationSearch(props: {
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={onKeyDown}
         onFocus={() => {
-          if (results.length > 0) setOpen(true);
+          if (results.length > 0 || noResults) setOpen(true);
         }}
         style={inputStyle}
       />
       <style>{`
         input::placeholder { color: ${withAlpha(ink, 0.5)}; }
       `}</style>
+      {open && noResults && results.length === 0 && (
+        <p
+          role="status"
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: "100%",
+            margin: "4px 0 0",
+            padding: "0.5rem 0",
+            color: ink,
+            opacity: 0.6,
+            fontStyle: "italic",
+            fontSize: "0.9rem",
+            zIndex: 10,
+          }}
+        >
+          no places found - try another spelling or a nearby city
+        </p>
+      )}
       {open && results.length > 0 && (
         <ul
           id={listboxId}
