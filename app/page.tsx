@@ -99,10 +99,16 @@ export default function Page() {
   const onHome = useCallback(() => {
     setView(null);
     setSearchKey((k) => k + 1);
+    setFetchError(false);
   }, []);
+
+  // A failed forecast fetch previously died silently; with no view yet that
+  // left the user stuck on the empty home page with zero feedback.
+  const [fetchError, setFetchError] = useState(false);
 
   const onSelect = useCallback(async (loc: LocationSelection) => {
     setLoading(true);
+    setFetchError(false);
     try {
       let forecast = await fetchForecast(loc.lat, loc.lng);
       const decision = decideSunsetDate(forecast.sunset_iso, forecast.timezone);
@@ -118,7 +124,8 @@ export default function Page() {
         defaultDate: forecast.sunset_iso.slice(0, 10),
       });
     } catch {
-      // Leave previous view in place on failure.
+      // Leave any previous view in place, but say something went wrong.
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -280,6 +287,31 @@ export default function Page() {
           underline={!selected}
         />
       </div>
+
+      {/* Status whisper while a first forecast loads or after it fails -
+          without this a failed fetch leaves the home page silently dead. */}
+      {!view && (loading || fetchError) && (
+        <p
+          style={{
+            position: "absolute",
+            top: "calc(50% + 56px)",
+            left: "50%",
+            transform: "translate(-50%, 0)",
+            margin: 0,
+            color: "#999",
+            fontStyle: "italic",
+            fontSize: "0.8rem",
+            fontFamily: "var(--font-sans), system-ui, sans-serif",
+            zIndex: 5,
+            textAlign: "center",
+            width: "min(480px, calc(100vw - 2rem))",
+          }}
+        >
+          {loading
+            ? "reading the sky..."
+            : "couldn't read the sky just now - please try again"}
+        </p>
+      )}
 
       {/* Hero block */}
       {view && (
