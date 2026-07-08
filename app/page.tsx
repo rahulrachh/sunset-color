@@ -47,7 +47,7 @@ function hasSeenTour(): boolean {
   try {
     return window.localStorage.getItem(TOUR_DONE_KEY) === "1";
   } catch {
-    return true; // storage unavailable — better no tour than a crash
+    return true; // storage unavailable - better no tour than a crash
   }
 }
 

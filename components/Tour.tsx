@@ -9,7 +9,7 @@ type Placement = "above" | "left";
 const STEPS: { target: string; text: string; placement: Placement }[] = [
   {
     target: "days",
-    text: "Each circle previews a day's sunset — tap one to see that evening.",
+    text: "Each circle previews a day's sunset - tap one to see that evening.",
     placement: "above",
   },
   { target: "next", text: "Peek further into the future.", placement: "above" },
