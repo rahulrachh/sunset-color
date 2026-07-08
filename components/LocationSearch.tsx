@@ -36,12 +36,23 @@ export function LocationSearch(props: {
   // True only after a search completed successfully with zero US matches —
   // network errors stay silent rather than claiming the place doesn't exist.
   const [noResults, setNoResults] = useState(false);
+  // The label of the last selected place ("Portland, Oregon"). It fills the
+  // input after a selection; focusing again empties the input and shows it
+  // as the placeholder instead, so a new search needs no backspacing.
+  const [committed, setCommitted] = useState<string | null>(null);
+  // Set when query changes for non-typing reasons (selection, blur restore)
+  // so the search effect below doesn't fire a pointless fetch for it.
+  const skipSearchRef = useRef(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (skipSearchRef.current) {
+      skipSearchRef.current = false;
+      return;
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const trimmed = query.trim();
@@ -101,9 +112,21 @@ export function LocationSearch(props: {
       lat: r.latitude,
       lng: r.longitude,
     });
+    // Replace whatever was typed with the chosen place. Kill the debounce
+    // and any in-flight fetch so a stale search for the old text can't
+    // reopen the dropdown after selection.
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (abortRef.current) abortRef.current.abort();
+    const label = r.admin1 ? `${r.name}, ${r.admin1}` : r.name;
+    setCommitted(label);
+    // If label === query, React bails out of the update and the effect never
+    // runs - don't arm the skip flag or it would swallow the next search.
+    skipSearchRef.current = label !== query;
+    setQuery(label);
     setOpen(false);
     setResults([]);
     setActiveIndex(-1);
+    setNoResults(false);
     inputRef.current?.blur();
   }
 
@@ -133,17 +156,36 @@ export function LocationSearch(props: {
   const activeId =
     open && activeIndex >= 0 ? `${optionIdPrefix}-${activeIndex}` : undefined;
 
+  // No underline: the input always sits inside a rounded pill (page.tsx
+  // wraps it), so the pill itself is the affordance.
   const inputStyle: React.CSSProperties = {
     width: "100%",
     background: "transparent",
     border: "none",
-    borderBottom: `1px solid ${withAlpha(ink, 0.4)}`,
     color: ink,
     outline: "none",
     fontSize: "1.25rem",
     padding: "0.5rem 0",
     caretColor: ink,
     fontFamily: "inherit",
+  };
+
+  // The dropdown floats as its own warm-white panel below the pill (same
+  // treatment as the tour popup), so option text is always legible no matter
+  // how dark the gradient behind it is.
+  const panelStyle: React.CSSProperties = {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: "100%",
+    background: "rgba(255, 248, 239, 0.97)",
+    color: "#2a1810",
+    borderRadius: "20px",
+    boxShadow: "0 8px 28px rgba(0, 0, 0, 0.12)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    overflow: "hidden",
+    zIndex: 10,
   };
 
   return (
@@ -156,12 +198,27 @@ export function LocationSearch(props: {
         aria-expanded={open && results.length > 0}
         aria-controls={listboxId}
         aria-activedescendant={activeId}
-        placeholder="where are you watching tonight?"
+        placeholder={committed ?? "where are you watching tonight?"}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={onKeyDown}
         onFocus={() => {
+          // A committed place clears out of the way on focus - it stays
+          // visible as the placeholder while the user types a new search
+          // from an empty input (no backspacing needed).
+          if (committed && query === committed) {
+            skipSearchRef.current = true;
+            setQuery("");
+            return;
+          }
           if (results.length > 0 || noResults) setOpen(true);
+        }}
+        onBlur={() => {
+          // Nothing new typed: put the committed place back in the pill.
+          if (committed && query.trim() === "") {
+            skipSearchRef.current = true;
+            setQuery(committed);
+          }
         }}
         style={inputStyle}
       />
@@ -172,17 +229,12 @@ export function LocationSearch(props: {
         <p
           role="status"
           style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: "100%",
-            margin: "4px 0 0",
-            padding: "0.5rem 0",
-            color: ink,
-            opacity: 0.6,
+            ...panelStyle,
+            margin: "14px 0 0",
+            padding: "0.7rem 1.25rem",
+            color: "rgba(42, 24, 16, 0.65)",
             fontStyle: "italic",
             fontSize: "0.9rem",
-            zIndex: 10,
           }}
         >
           no places found - try another spelling or a nearby city
@@ -193,15 +245,10 @@ export function LocationSearch(props: {
           id={listboxId}
           role="listbox"
           style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: "100%",
-            marginTop: 4,
-            padding: 0,
+            ...panelStyle,
+            marginTop: 14,
+            padding: "0.4rem 0",
             listStyle: "none",
-            color: ink,
-            zIndex: 10,
           }}
         >
           {results.map((r, i) => {
@@ -218,9 +265,9 @@ export function LocationSearch(props: {
                 }}
                 onMouseEnter={() => setActiveIndex(i)}
                 style={{
-                  padding: "0.5rem 0",
+                  padding: "0.5rem 1.25rem",
                   cursor: "pointer",
-                  background: isActive ? withAlpha(ink, 0.12) : "transparent",
+                  background: isActive ? "rgba(42, 24, 16, 0.08)" : "transparent",
                   fontSize: "1rem",
                 }}
               >
