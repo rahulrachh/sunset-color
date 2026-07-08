@@ -274,27 +274,6 @@ export default function Page() {
         <LocationSearch onSelect={onSelect} inkColor={searchInk} />
       </div>
 
-      {/* Empty-state whisper text */}
-      {!selected && (
-        <p
-          style={{
-            position: "absolute",
-            top: "calc(50% + 56px)",
-            left: "50%",
-            transform: "translate(-50%, 0)",
-            margin: 0,
-            color: "#999",
-            fontSize: "0.75rem",
-            fontFamily: "var(--font-sans), system-ui, sans-serif",
-            zIndex: 5,
-            textAlign: "center",
-            width: "min(480px, calc(100vw - 2rem))",
-          }}
-        >
-          where do you want to watch tonight&rsquo;s sunset?
-        </p>
-      )}
-
       {/* Hero block */}
       {view && (
         <div

@@ -198,7 +198,7 @@ export function LocationSearch(props: {
         aria-expanded={open && results.length > 0}
         aria-controls={listboxId}
         aria-activedescendant={activeId}
-        placeholder={committed ?? "where are you watching tonight?"}
+        placeholder={committed ?? "where are you watching sunset tonight?"}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={onKeyDown}
